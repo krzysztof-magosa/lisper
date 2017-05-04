@@ -1,5 +1,10 @@
+from __future__ import print_function
 import operator
 import syntax
+
+
+def sprintf(format, *values):
+    return (format % values)
 
 
 class Scope(object):
@@ -9,9 +14,10 @@ class Scope(object):
         self.outer = outer
 
     def find(self, name):
-        # @TODO what to do when there is no outer scope?
         if name in self.data:
             return self
+        elif self.outer is None:
+            raise RuntimeError("Attempt to use not existing variable '{}'.".format(name))
         else:
             return self.outer.find(name)
 
@@ -22,7 +28,7 @@ class Scope(object):
         self.data[name] = value
 
     def set(self, name, value):
-        self.find(name)[name] = value
+        self.find(name).data[name] = value
 
 
 class Procedure(object):
@@ -44,7 +50,24 @@ def scope_init(scope):
     scope.define('*', operator.mul)
     scope.define('%', operator.mod)
 
+    scope.define('<', operator.lt)
+    scope.define('<=', operator.le)
+    scope.define('>', operator.gt)
+    scope.define('>=', operator.ge)
+    scope.define('=', operator.eq)
+
+    scope.define('abs', abs)
+
+    scope.define('car', lambda x: x[0])
+    scope.define('cdr', lambda x: x[1:])
+
     scope.define('begin', lambda *x: x[-1])
+
+    scope.define('integer?', lambda x: isinstance(x, int))
+    scope.define('float?', lambda x: isinstance(x, float))
+    scope.define('string?', lambda x: isinstance(x, str) and not isinstance(x, syntax.Symbol))
+    scope.define('symbol?', lambda x: isinstance(x, syntax.Symbol))
+    scope.define('list?', lambda x: isinstance(x, list))
 
 
 class Interpreter(object):
@@ -55,6 +78,7 @@ class Interpreter(object):
 
     def interpret(self, code):
         lisp = self.parser.parse(code)
+#        print(lisp)
         return self.eval_lisp(lisp, scope=self.scope)
 
     def eval_lisp(self, item, scope):
@@ -64,7 +88,7 @@ class Interpreter(object):
             return item
         elif item[0] == 'if':
             (_, test_clause, then_clause, else_clause) = item
-            clause = then_clause if eval_expr(test_clause) else else_clause
+            clause = then_clause if self.eval_lisp(test_clause, scope=scope) else else_clause
             return self.eval_lisp(clause, scope=scope)
         elif item[0] == 'lambda':
             (_, parameters, body) = item
@@ -72,6 +96,25 @@ class Interpreter(object):
         elif item[0] == 'define':
             (_, name, value) = item
             scope.define(name, self.eval_lisp(value, scope=scope))
+        elif item[0] == 'set!':
+            (_, name, value) = item
+            scope.set(name, self.eval_lisp(value, scope=scope))
+        elif item[0] == 'quote':
+            (_, expr) = item
+            return expr
+        elif item[0] == 'print':
+            (_, text) = item
+            print(self.eval_lisp(text, scope=scope))
+        elif item[0] == 'prin1':
+            (_, text) = item
+            print(self.eval_lisp(text, scope=scope), end='')
+        elif item[0] == 'format':
+            arguments = [self.eval_lisp(arg, scope=scope) for arg in item[2:]]
+            return sprintf(self.eval_lisp(item[1], scope=scope), *arguments)
+        elif item[0] == 'while':
+            (_, cond, body) = item
+            while self.eval_lisp(cond, scope=scope):
+                self.eval_lisp(body, scope=scope)
         else:
             procedure = self.eval_lisp(item[0], scope=scope)
             arguments = [self.eval_lisp(arg, scope=scope) for arg in item[1:]]

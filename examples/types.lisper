@@ -1,0 +1,14 @@
+(begin
+ (define check-type (lambda (value)
+                      (begin
+                       (print value)
+                       (print (format " is integer: %s" (integer? value)))
+                       (print (format " is float:   %s" (float? value)))
+                       (print (format " is symbol:  %s" (symbol? value)))
+                       (print (format " is string:  %s" (string? value)))
+                       (print ""))))
+
+ (check-type 5)
+ (check-type "hello world")
+ (check-type 3.14)
+ (check-type (quote begin)))

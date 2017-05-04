@@ -24,23 +24,27 @@ def t_newline(t):
     t.lexer.lineno += len(t.value)
 
 def t_NUMBER(t):
-    r'\d+'
-    t.value = int(t.value)
+    r'[-+]?[0-9]*\.?[0-9]+'
+    try:
+        t.value = int(t.value)
+    except ValueError:
+        t.value = float(t.value)
+
     return t
 
 def t_STRING(t):
     r'\"([^\\\n]|(\\.))*?\"'
-    print(t.value)
+    t.value = t.value[1:-1]
     return t
 
 def t_SYMBOL(t):
-    r'(\w+|\+|\-|\/|\*|%)'
+    r'[-+/*%!<>=a-zA-Z0-9\?]+'
     t.value = Symbol(t.value)
     return t
 
 def t_error(t):
     print("Illegal character '{}'".format(t.value[0]))
-    t.lexer.skip(1)
+#    t.lexer.skip(1)
 
 lexer = lex.lex()
 

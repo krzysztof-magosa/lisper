@@ -1,0 +1,7 @@
+(begin
+ (print "Hello World")
+ (print (format "%.2f" 3.141592653589793))
+ (prin1 ".")
+ (prin1 "_")
+ (prin1 ".")
+ (print ""))
