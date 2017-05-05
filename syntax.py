@@ -11,12 +11,14 @@ tokens = (
     'RPAREN',
     'NUMBER',
     'STRING',
-    'SYMBOL'
+    'SYMBOL',
+    'QUOTE'
 )
 
 # Lexer rules
 t_LPAREN = r'\('
 t_RPAREN = r'\)'
+t_QUOTE = '\''
 t_ignore = ' \t'
 
 def t_newline(t):
@@ -38,7 +40,7 @@ def t_STRING(t):
     return t
 
 def t_SYMBOL(t):
-    r'[^\s\(\)]+'
+    r'[^\s\(\)\']+'
 #    r'[-+/*%!<>=a-zA-Z0-9\?]+'
     t.value = Symbol(t.value)
     return t
@@ -73,6 +75,10 @@ def p_list_empty(p):
 def p_list_nonempty(p):
     'list : LPAREN expr_list RPAREN'
     p[0] = p[2]
+
+def p_list_nonempty_quote(p):
+    'list : QUOTE expr'
+    p[0] = ['quote', p[2]]
 
 def p_expr_list_item(p):
     'expr_list : expr'
