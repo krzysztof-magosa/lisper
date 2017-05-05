@@ -132,8 +132,12 @@ class Interpreter(object):
         self.assert_nargs("typeof", args, 1)
         return self.typeof(args[0])
 
-#    def builtin_define(self, scope, *args):
-#        self.assert_nargs("define", args, 2)
+    def builtin_define(self, scope, *args):
+        self.assert_nargs("define", args, 2)
+        scope.define(args[0], args[1])
+
+    def builtin_format(self, scope, *args):
+        return sprintf(args[0], *args[1:])
 
     def eval_lisp(self, item, scope):
         if isinstance(item, syntax.Symbol):
@@ -154,10 +158,7 @@ class Interpreter(object):
         elif item[0] == 'lambda':
             (_, parameters, body) = item
             return Procedure(self, parameters, body, scope)
-        elif item[0] == 'define':
-            (_, name, value) = item
-            scope.define(name, self.eval_lisp(value, scope=scope))
-        elif item[0] == 'set!':
+        elif item[0] == 'set-local':
             (_, name, value) = item
             scope.set(name, self.eval_lisp(value, scope=scope))
         elif item[0] == 'quote':
@@ -169,9 +170,6 @@ class Interpreter(object):
         elif item[0] == 'prin1':
             (_, text) = item
             print(self.eval_lisp(text, scope=scope), end='')
-        elif item[0] == 'format':
-            arguments = [self.eval_lisp(arg, scope=scope) for arg in item[2:]]
-            return sprintf(self.eval_lisp(item[1], scope=scope), *arguments)
         elif item[0] == 'while':
             (_, cond, body) = item
             while self.eval_lisp(cond, scope=scope):

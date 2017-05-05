@@ -1,5 +1,5 @@
 (begin
- (define check-type (lambda (value)
+ (define 'check-type (lambda (value)
                       (begin
                        (print value)
                        (print (format " is integer: %s" (integer? value)))
