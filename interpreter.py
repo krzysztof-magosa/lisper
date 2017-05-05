@@ -79,6 +79,14 @@ class Interpreter(object):
     T_LAMBDA = 'lambda'
     T_UNKNOWN = 'unknown'
 
+    BUILTINS = {
+        'if': 'builtin_if',
+        'lambda': 'builtin_lambda',
+        'define': 'builtin_define',
+        'set': 'builtin_set',
+        'quote': 'builtin_quote',
+    }
+
     def __init__(self, parser=syntax.parser, scope_init=scope_init):
         self.parser = parser
         self.scope = Scope()
@@ -128,6 +136,9 @@ class Interpreter(object):
                 )
             )
 
+    def builtin_if(self, scope, *args):
+
+
     def builtin_typeof(self, scope, *args):
         self.assert_nargs("typeof", args, 1)
         return self.typeof(args[0])
@@ -139,31 +150,26 @@ class Interpreter(object):
     def builtin_format(self, scope, *args):
         return sprintf(args[0], *args[1:])
 
+#                elif item[0] == 'quote':
+#            (_, expr) = item
+#            return expr
+
+
     def eval_lisp(self, item, scope):
         if isinstance(item, syntax.Symbol):
             return scope.get(item)
         elif not isinstance(item, list):
             return item
-        elif hasattr(self, "builtin_{}".format(item[0])):
+        elif item[0] in self.BUILTINS:
             arguments = [self.eval_lisp(arg, scope=scope) for arg in item[1:]]
-
-            return getattr(self, "builtin_{}".format(item[0]))(
-                scope,
-                *arguments
-            )
-        elif item[0] == 'if':
-            (_, test_clause, then_clause, else_clause) = item
-            clause = then_clause if self.eval_lisp(test_clause, scope=scope) else else_clause
-            return self.eval_lisp(clause, scope=scope)
+            func = getattr(self, self.BUILTINS[item[0]])
+            return func(scope, *arguments)
         elif item[0] == 'lambda':
             (_, parameters, body) = item
             return Procedure(self, parameters, body, scope)
-        elif item[0] == 'set-local':
+        elif item[0] == 'set':
             (_, name, value) = item
             scope.set(name, self.eval_lisp(value, scope=scope))
-        elif item[0] == 'quote':
-            (_, expr) = item
-            return expr
         elif item[0] == 'print':
             (_, text) = item
             print(self.eval_lisp(text, scope=scope))
