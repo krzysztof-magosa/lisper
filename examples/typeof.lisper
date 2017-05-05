@@ -1,0 +1,7 @@
+(begin
+ (define x 5)
+ (define pi 3.14)
+ (define name "KM")
+ (define symbol (quote symbol))
+
+ (print (typeof 3.14)))

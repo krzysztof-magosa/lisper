@@ -38,7 +38,8 @@ def t_STRING(t):
     return t
 
 def t_SYMBOL(t):
-    r'[-+/*%!<>=a-zA-Z0-9\?]+'
+    r'[^\s\(\)]+'
+#    r'[-+/*%!<>=a-zA-Z0-9\?]+'
     t.value = Symbol(t.value)
     return t
 

@@ -71,6 +71,14 @@ def scope_init(scope):
 
 
 class Interpreter(object):
+    T_SYMBOL = 'symbol'
+    T_STRING = 'string'
+    T_FLOAT = 'float'
+    T_INTEGER = 'integer'
+    T_BOOLEAN = 'boolean'
+    T_LAMBDA = 'lambda'
+    T_UNKNOWN = 'unknown'
+
     def __init__(self, parser=syntax.parser, scope_init=scope_init):
         self.parser = parser
         self.scope = Scope()
@@ -81,11 +89,64 @@ class Interpreter(object):
 #        print(lisp)
         return self.eval_lisp(lisp, scope=self.scope)
 
+    def typeof(self, value):
+        if isinstance(value, syntax.Symbol):
+            return self.T_SYMBOL
+        elif isinstance(value, str):
+            return self.T_STRING
+        elif isinstance(value, float):
+            return self.T_FLOAT
+        elif isinstance(value, int):
+            return self.T_INTEGER
+        elif isinstance(value, bool):
+            return self.T_BOOLEAN
+        elif isinstance(value, Procedure):
+            return self.T_LAMBDA
+        else:
+            return self.T_UNKNOWN
+
+    def assert_nargs(self, context, args, expected):
+        got = len(args)
+        if got != expected:
+            raise RuntimeError(
+                "{}: expected {} arguments, got {}.".format(
+                    context,
+                    expected,
+                    got
+                )
+            )
+
+    def assert_type(self, context, args, n, expected):
+        got = self.typeof(args[n])
+        if got != expected:
+            raise RuntimeError(
+                "{}: expected {} argument to be {}, got {}.".format(
+                    context,
+                    n,
+                    expected,
+                    got
+                )
+            )
+
+    def builtin_typeof(self, scope, *args):
+        self.assert_nargs("typeof", args, 1)
+        return self.typeof(args[0])
+
+#    def builtin_define(self, scope, *args):
+#        self.assert_nargs("define", args, 2)
+
     def eval_lisp(self, item, scope):
         if isinstance(item, syntax.Symbol):
             return scope.get(item)
         elif not isinstance(item, list):
             return item
+        elif hasattr(self, "builtin_{}".format(item[0])):
+            arguments = [self.eval_lisp(arg, scope=scope) for arg in item[1:]]
+
+            return getattr(self, "builtin_{}".format(item[0]))(
+                scope,
+                *arguments
+            )
         elif item[0] == 'if':
             (_, test_clause, then_clause, else_clause) = item
             clause = then_clause if self.eval_lisp(test_clause, scope=scope) else else_clause
