@@ -31,7 +31,10 @@ class Scope(object):
         self.data[name] = value
 
     def set(self, name, value):
-        self.find(name).data[name] = value
+        try:
+            self.find(name).data[name] = value
+        except:
+            self.define(name, value)
 
 
 class Procedure(object):
