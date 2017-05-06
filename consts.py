@@ -4,6 +4,8 @@ NIL = 'nil'
 
 # Built-ins
 QUOTE = 'quote'
+QUASIQUOTE = 'quasiquote'
+UNQUOTE = 'unquote'
 LAMBDA = 'lambda'
 
 # Type names

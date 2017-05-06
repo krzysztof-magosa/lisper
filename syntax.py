@@ -9,13 +9,17 @@ tokens = (
     'NUMBER',
     'STRING',
     'SYMBOL',
-    'QUOTE'
+    'QUOTE',
+    'TICK',
+    'COMMA'
 )
 
 # Lexer rules
 t_LPAREN = r'\('
 t_RPAREN = r'\)'
-t_QUOTE = '\''
+t_QUOTE = r'\''
+t_TICK = r'`'
+t_COMMA = r','
 t_ignore = ' \t'
 
 def t_newline(t):
@@ -37,8 +41,7 @@ def t_STRING(t):
     return t
 
 def t_SYMBOL(t):
-    r'[^\s\(\)\']+'
-#    r'[-+/*%!<>=a-zA-Z0-9\?]+'
+    r'[^\s\(\)\'`,]+'
     t.value = Symbol(t.value)
     return t
 
@@ -73,9 +76,17 @@ def p_list_nonempty(p):
     'list : LPAREN expr_list RPAREN'
     p[0] = p[2]
 
-def p_list_nonempty_quote(p):
+def p_list_quote(p):
     'list : QUOTE expr'
     p[0] = [Symbol(c.QUOTE), p[2]]
+
+def p_list_quasiquote(p):
+    'list : TICK expr'
+    p[0] = [Symbol(c.QUASIQUOTE), p[2]]
+
+def p_list_comma(p):
+    'list : COMMA expr'
+    p[0] = [Symbol(c.UNQUOTE), p[2]]
 
 def p_expr_list_item(p):
     'expr_list : expr'
