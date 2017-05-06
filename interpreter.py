@@ -40,22 +40,6 @@ class Scope(object):
             self.define(name, value)
 
 
-class Procedure(object):
-    def __init__(self, interpreter, parameters, body, outer_scope):
-        self.interpreter = interpreter
-        self.parameters = parameters
-        self.body = body
-        self.outer_scope = outer_scope
-
-    def __call__(self, *arguments):
-        scope = Scope(
-            parameters=self.parameters,
-            arguments=arguments,
-            outer=self.outer_scope
-        )
-        return self.interpreter.eval_lisp(self.body, scope)
-
-
 class Macro(Procedure):
     pass
 
@@ -90,7 +74,7 @@ class Interpreter(object):
 
     BUILTINS = {
         'if': 'builtin_if',
-        'lambda': 'builtin_lambda',
+        c.LAMBDA: 'builtin_lambda',
         '\\': 'builtin_lambda',
         'macro': 'builtin_macro',
         'quasiquote': 'builtin_quasiquote',
@@ -307,10 +291,7 @@ class Interpreter(object):
     def builtin_print(self, scope, args):
         self.assert_nargs("print", args, 1)
         obj = self.eval_lisp(args[0], scope=scope)
-        if isinstance(obj, Procedure):
-            print(obj.body)
-        else:
-            print(to_lisp(obj))
+        print(to_lisp(obj))
 
     def builtin_prin1(self, scope, args):
         self.assert_nargs("prin1", args, 1)
