@@ -54,12 +54,6 @@ def scope_init(scope):
     scope.define('nil', [])
     scope.define('t', True)
 
-#    scope.define('+', operator.add)
-#    scope.define('-', operator.sub)
-#    scope.define('/', operator.div)
-#    scope.define('*', operator.mul)
-#    scope.define('%', operator.mod)
-
     scope.define('abs', abs)
 
     scope.define('car', lambda x: x[0])
@@ -80,6 +74,7 @@ class Interpreter(object):
     T_FLOAT = 'float'
     T_INTEGER = 'integer'
     T_BOOLEAN = 'boolean'
+    T_LIST = 'list'
     T_LAMBDA = 'lambda'
     T_UNKNOWN = 'unknown'
 
@@ -94,6 +89,10 @@ class Interpreter(object):
         'while': 'builtin_while',
         'typeof': 'builtin_typeof',
         'format': 'builtin_format',
+
+        'head': 'builtin_head',
+        'tail': 'builtin_tail',
+        'len': 'builtin_len',
 
         '=': 'builtin_math_eq',
         '<': 'builtin_math_lt',
@@ -131,6 +130,8 @@ class Interpreter(object):
             return self.T_FLOAT
         elif isinstance(value, int):
             return self.T_INTEGER
+        elif isinstance(value, list):
+            return self.T_LIST
         elif isinstance(value, Procedure):
             return self.T_LAMBDA
         else:
@@ -238,6 +239,27 @@ class Interpreter(object):
         (cond, body) = args
         while self.eval_lisp(cond, scope=scope):
             self.eval_lisp(body, scope=scope)
+
+    def builtin_head(self, scope, args):
+        self.assert_nargs("head", args, 1)
+        args = self.eval_all(args, scope)
+        self.assert_type_eval("head", args[0], 0, self.T_LIST)
+
+        return args[0][0]
+
+    def builtin_tail(self, scope, args):
+        self.assert_nargs("tail", args, 1)
+        args = self.eval_all(args, scope)
+        self.assert_type_eval("tail", args[0], 0, self.T_LIST)
+
+        return args[0][-1]
+
+    def builtin_len(self, scope, args):
+        self.assert_nargs("len", args, 1)
+        args = self.eval_all(args, scope)
+        self.assert_type_eval("len", args[0], 0, self.T_LIST)
+
+        return len(args[0])
 
     def builtin_math_eq(self, scope, args):
         self.assert_rargs("=", args, 1, sys.maxint)
