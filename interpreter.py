@@ -50,6 +50,9 @@ class Procedure(object):
 
 
 def scope_init(scope):
+    scope.define('nil', [])
+    scope.define('t', True)
+
     scope.define('+', operator.add)
     scope.define('-', operator.sub)
     scope.define('/', operator.div)
@@ -111,14 +114,14 @@ class Interpreter(object):
     def typeof(self, value):
         if isinstance(value, syntax.Symbol):
             return self.T_SYMBOL
+        elif isinstance(value, bool):
+            return self.T_BOOLEAN
         elif isinstance(value, str):
             return self.T_STRING
         elif isinstance(value, float):
             return self.T_FLOAT
         elif isinstance(value, int):
             return self.T_INTEGER
-        elif isinstance(value, bool):
-            return self.T_BOOLEAN
         elif isinstance(value, Procedure):
             return self.T_LAMBDA
         else:
@@ -135,6 +138,19 @@ class Interpreter(object):
                 )
             )
 
+    def assert_rargs(self, context, args, minimum, maximum):
+        got = len(args)
+
+        if got < minimum or got > maximum:
+            raise RuntimeError(
+                "{}: expected {}-{} arguments, got {}.".format(
+                    context,
+                    minimum,
+                    maximum,
+                    got
+                )
+            )
+
     def assert_type(self, context, args, n, expected):
         got = self.typeof(args[n])
         if got != expected:
@@ -147,11 +163,30 @@ class Interpreter(object):
                 )
             )
 
+    def assert_type_eval(self, context, value, n, expected):
+        got = self.typeof(value)
+        if got != expected:
+            raise RuntimeError(
+                "{}: expected {} argument to be evaluated into {}, got {}.".format(
+                    context,
+                    n,
+                    expected,
+                    got
+                )
+            )
+
     def builtin_if(self, scope, args):
-        # @TODO validation
-        (test_clause, then_clause, else_clause) = args
-        test_result = self.eval_lisp(test_clause, scope)
-        clause = then_clause if test_result else else_clause
+        self.assert_rargs("if", args, 2, 3)
+        test_result = self.eval_lisp(args[0], scope)
+        self.assert_type_eval("if", test_result, 0, self.T_BOOLEAN)
+
+        if test_result:
+            clause = args[1]
+        elif len(args) == 3:
+            clause = args[2]
+        else:
+            clause = []
+
         return self.eval_lisp(clause, scope)
 
     def builtin_typeof(self, scope, args):
@@ -192,7 +227,7 @@ class Interpreter(object):
     def eval_lisp(self, item, scope):
         if isinstance(item, syntax.Symbol):
             return scope.get(item)
-        elif not isinstance(item, list):
+        elif not isinstance(item, list) or len(item) == 0:
             return item
         elif item[0] in self.BUILTINS:
             func = getattr(self, self.BUILTINS[item[0]])
