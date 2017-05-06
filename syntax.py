@@ -1,9 +1,6 @@
 import ply.lex as lex
 import ply.yacc as yacc
-
-# Tokens types
-class Symbol(str):
-    pass
+from lisp import *
 
 # Tokens list
 tokens = (
@@ -78,7 +75,7 @@ def p_list_nonempty(p):
 
 def p_list_nonempty_quote(p):
     'list : QUOTE expr'
-    p[0] = ['quote', p[2]]
+    p[0] = [Symbol(c.QUOTE), p[2]]
 
 def p_expr_list_item(p):
     'expr_list : expr'

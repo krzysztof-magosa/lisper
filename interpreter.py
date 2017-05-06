@@ -2,6 +2,7 @@ from __future__ import print_function
 from __future__ import division
 import sys
 import syntax
+from lisp import *
 
 
 def sprintf(format, *values):
@@ -70,11 +71,11 @@ def scope_init(scope):
 
     scope.define('begin', lambda *x: x[-1])
 
-    scope.define('integer?', lambda x: isinstance(x, int))
-    scope.define('float?', lambda x: isinstance(x, float))
-    scope.define('string?', lambda x: isinstance(x, str) and not isinstance(x, syntax.Symbol))
-    scope.define('symbol?', lambda x: isinstance(x, syntax.Symbol))
-    scope.define('list?', lambda x: isinstance(x, list))
+    scope.define('integer?', lambda x: is_integer(x))
+    scope.define('float?', lambda x: is_float(x))
+    scope.define('string?', lambda x: is_string(x))
+    scope.define('symbol?', lambda x: is_symbol(x))
+    scope.define('list?', lambda x: is_list(x))
 
 
 class Interpreter(object):
@@ -309,11 +310,11 @@ class Interpreter(object):
         if isinstance(obj, Procedure):
             print(obj.body)
         else:
-            print(obj)
+            print(to_lisp(obj))
 
     def builtin_prin1(self, scope, args):
         self.assert_nargs("prin1", args, 1)
-        print(self.eval_lisp(args[0], scope=scope), end='')
+        print(to_lisp(self.eval_lisp(args[0], scope=scope)), end='')
 
     def builtin_while(self, scope, args):
         (cond, body) = args

@@ -2,6 +2,7 @@
 
 from interpreter import Interpreter
 import sys
+from lisp import *
 
 interpreter = Interpreter()
 
@@ -10,7 +11,7 @@ def run_code(code):
     try:
         value = interpreter.interpret(code)
         if value is not None:
-            print(value)
+            print(to_lisp(value))
     except RuntimeError as e:
         print(e.message)
 
