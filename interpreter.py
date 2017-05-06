@@ -28,9 +28,11 @@ class Scope(object):
         return self.find(name).data[name]
 
     def define(self, name, value):
+        # Creates new variable.
         self.data[name] = value
 
     def set(self, name, value):
+        # Changes existing variable or creates new variable.
         try:
             self.find(name).data[name] = value
         except:
