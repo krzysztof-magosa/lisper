@@ -82,8 +82,10 @@ class Interpreter(object):
         'if': 'builtin_if',
         'lambda': 'builtin_lambda',
         '\\': 'builtin_lambda',
-        'define': 'builtin_define',
-        'set!': 'builtin_set',
+        'set': 'builtin_set',
+        'set!': 'builtin_set_bang',
+        'setq': 'builtin_setq',
+        'setq!': 'builtin_setq_bang',
         'quote': 'builtin_quote',
         'print': 'builtin_print',
         'prin1': 'builtin_prin1',
@@ -210,9 +212,27 @@ class Interpreter(object):
         self.assert_nargs("typeof", args, 1)
         return self.typeof(args[0])
 
-    def builtin_define(self, scope, args):
-        self.assert_nargs("define", args, 2)
+    def builtin_setq(self, scope, args):
+        self.assert_nargs("setq", args, 2)
+        self.assert_type("setq", args, 0, self.T_SYMBOL)
         scope.define(args[0], self.eval_lisp(args[1], scope))
+
+    def builtin_setq_bang(self, scope, args):
+        self.assert_nargs("setq!", args, 2)
+        self.assert_type("setq!", args, 0, self.T_SYMBOL)
+        scope.set(args[0], self.eval_lisp(args[1], scope=scope))
+
+    def builtin_set(self, scope, args):
+        self.assert_nargs("setq", args, 2)
+        name = self.eval_lisp(args[0], scope)
+        self.assert_type_eval("set", name, 0, self.T_SYMBOL)
+        scope.define(name, self.eval_lisp(args[1], scope))
+
+    def builtin_set_bang(self, scope, args):
+        self.assert_nargs("set!", args, 2)
+        name = self.eval_lisp(args[0], scope)
+        self.assert_type_eval("set!", name, 0, self.T_SYMBOL)
+        scope.set(name, self.eval_lisp(args[1], scope=scope))
 
     def builtin_format(self, scope, args):
         return sprintf(args[0], *args[1:])
@@ -223,10 +243,6 @@ class Interpreter(object):
     def builtin_lambda(self, scope, args):
         (parameters, body) = args
         return Procedure(self, parameters, body, scope)
-
-    def builtin_set(self, scope, args):
-        (name, value) = args
-        scope.set(name, self.eval_lisp(value, scope=scope))
 
     def builtin_print(self, scope, args):
         self.assert_nargs("print", args, 1)
