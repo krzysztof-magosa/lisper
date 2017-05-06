@@ -50,6 +50,10 @@ class Procedure(object):
         return self.interpreter.eval_lisp(self.body, scope)
 
 
+class Macro(Procedure):
+    pass
+
+
 def scope_init(scope):
     scope.define('nil', [])
     scope.define('t', True)
@@ -82,6 +86,8 @@ class Interpreter(object):
         'if': 'builtin_if',
         'lambda': 'builtin_lambda',
         '\\': 'builtin_lambda',
+        'macro': 'builtin_macro',
+        'quasiquote': 'builtin_quasiquote',
         'set': 'builtin_set',
         'set!': 'builtin_set_bang',
         'setq': 'builtin_setq',
@@ -92,6 +98,7 @@ class Interpreter(object):
         'while': 'builtin_while',
         'typeof': 'builtin_typeof',
         'format': 'builtin_format',
+        'cons': 'builtin_cons',
 
         'head': 'builtin_head',
         'tail': 'builtin_tail',
@@ -194,6 +201,29 @@ class Interpreter(object):
                 )
             )
 
+    def is_nil(self, x):
+        if isinstance(x, syntax.Symbol) and x == "nil":
+            return True
+        elif x == []:
+            return True
+
+        return False
+
+    def builtin_cons(self, scope, args):
+        head = self.eval_lisp(args[0], scope)
+        rest = self.eval_lisp(args[1], scope)
+
+        if self.is_nil(head):
+            head = []
+
+        if self.is_nil(rest):
+            rest = []
+
+        if not isinstance(rest, list):
+            rest = [rest]
+
+        return [head] + rest
+
     def builtin_if(self, scope, args):
         self.assert_rargs("if", args, 2, 3)
         test_result = self.eval_lisp(args[0], scope)
@@ -244,9 +274,37 @@ class Interpreter(object):
         (parameters, body) = args
         return Procedure(self, parameters, body, scope)
 
+    def builtin_macro(self, scope, args):
+        (parameters, body) = args
+        return Macro(self, parameters, self.eval_lisp(body, scope), scope)
+
+    def is_pair(self, x):
+        return x != [] and isinstance(x, list)
+
+    def expand_quasiquote(self, x):
+        if not self.is_pair(x):
+            return ['quote', x]
+        elif x[0] == 'unquote':
+            return x[1]
+        else:
+            return [
+                'cons',
+                self.expand_quasiquote(x[0]),
+                self.expand_quasiquote(x[1:])
+            ]
+
+    def builtin_quasiquote(self, scope, args):
+        y = self.expand_quasiquote(args[0])
+        y = self.eval_lisp(y, scope)
+        return y
+
     def builtin_print(self, scope, args):
         self.assert_nargs("print", args, 1)
-        print(self.eval_lisp(args[0], scope=scope))
+        obj = self.eval_lisp(args[0], scope=scope)
+        if isinstance(obj, Procedure):
+            print(obj.body)
+        else:
+            print(obj)
 
     def builtin_prin1(self, scope, args):
         self.assert_nargs("prin1", args, 1)
@@ -427,4 +485,10 @@ class Interpreter(object):
         else:
             procedure = self.eval_lisp(item[0], scope=scope)
             arguments = [self.eval_lisp(arg, scope=scope) for arg in item[1:]]
-            return procedure(*arguments)
+
+            if isinstance(procedure, Macro):
+                print("MAKRO")
+#                procedure.outer_scope = scope
+                return self.eval_lisp(procedure(*arguments), scope)
+            else:
+                return procedure(*arguments)
