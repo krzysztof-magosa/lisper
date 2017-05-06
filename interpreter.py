@@ -17,7 +17,9 @@ class Scope(object):
         if name in self.data:
             return self
         elif self.outer is None:
-            raise RuntimeError("Attempt to use not existing variable '{}'.".format(name))
+            raise RuntimeError(
+                "Attempt to use not existing variable '{}'.".format(name)
+            )
         else:
             return self.outer.find(name)
 
@@ -39,7 +41,11 @@ class Procedure(object):
         self.outer_scope = outer_scope
 
     def __call__(self, *arguments):
-        scope = Scope(parameters=self.parameters, arguments=arguments, outer=self.outer_scope)
+        scope = Scope(
+            parameters=self.parameters,
+            arguments=arguments,
+            outer=self.outer_scope
+        )
         return self.interpreter.eval_lisp(self.body, scope)
 
 
@@ -83,8 +89,13 @@ class Interpreter(object):
         'if': 'builtin_if',
         'lambda': 'builtin_lambda',
         'define': 'builtin_define',
-        'set': 'builtin_set',
+        'set!': 'builtin_set',
         'quote': 'builtin_quote',
+        'print': 'builtin_print',
+        'prin1': 'builtin_prin1',
+        'while': 'builtin_while',
+        'typeof': 'builtin_typeof',
+        'format': 'builtin_format'
     }
 
     def __init__(self, parser=syntax.parser, scope_init=scope_init):
@@ -117,7 +128,7 @@ class Interpreter(object):
         got = len(args)
         if got != expected:
             raise RuntimeError(
-                "{}: expected {} arguments, got {}.".format(
+                "{}: expected {} argument(s), got {}.".format(
                     context,
                     expected,
                     got
@@ -136,24 +147,47 @@ class Interpreter(object):
                 )
             )
 
-    def builtin_if(self, scope, *args):
+    def builtin_if(self, scope, args):
+        # @TODO validation
+        (test_clause, then_clause, else_clause) = args
+        test_result = self.eval_lisp(test_clause, scope)
+        clause = then_clause if test_result else else_clause
+        return self.eval_lisp(clause, scope)
 
-
-    def builtin_typeof(self, scope, *args):
+    def builtin_typeof(self, scope, args):
         self.assert_nargs("typeof", args, 1)
         return self.typeof(args[0])
 
-    def builtin_define(self, scope, *args):
+    def builtin_define(self, scope, args):
         self.assert_nargs("define", args, 2)
-        scope.define(args[0], args[1])
+        scope.define(args[0], self.eval_lisp(args[1], scope))
 
-    def builtin_format(self, scope, *args):
+    def builtin_format(self, scope, args):
         return sprintf(args[0], *args[1:])
 
-#                elif item[0] == 'quote':
-#            (_, expr) = item
-#            return expr
+    def builtin_quote(self, scope, args):
+        return args[0]
 
+    def builtin_lambda(self, scope, args):
+        (parameters, body) = args
+        return Procedure(self, parameters, body, scope)
+
+    def builtin_set(self, scope, args):
+        (name, value) = args
+        scope.set(name, self.eval_lisp(value, scope=scope))
+
+    def builtin_print(self, scope, args):
+        self.assert_nargs("print", args, 1)
+        print(self.eval_lisp(args[0], scope=scope))
+
+    def builtin_prin1(self, scope, args):
+        self.assert_nargs("prin1", args, 1)
+        print(self.eval_lisp(args[0], scope=scope), end='')
+
+    def builtin_while(self, scope, args):
+        (cond, body) = args
+        while self.eval_lisp(cond, scope=scope):
+            self.eval_lisp(body, scope=scope)
 
     def eval_lisp(self, item, scope):
         if isinstance(item, syntax.Symbol):
@@ -161,25 +195,8 @@ class Interpreter(object):
         elif not isinstance(item, list):
             return item
         elif item[0] in self.BUILTINS:
-            arguments = [self.eval_lisp(arg, scope=scope) for arg in item[1:]]
             func = getattr(self, self.BUILTINS[item[0]])
-            return func(scope, *arguments)
-        elif item[0] == 'lambda':
-            (_, parameters, body) = item
-            return Procedure(self, parameters, body, scope)
-        elif item[0] == 'set':
-            (_, name, value) = item
-            scope.set(name, self.eval_lisp(value, scope=scope))
-        elif item[0] == 'print':
-            (_, text) = item
-            print(self.eval_lisp(text, scope=scope))
-        elif item[0] == 'prin1':
-            (_, text) = item
-            print(self.eval_lisp(text, scope=scope), end='')
-        elif item[0] == 'while':
-            (_, cond, body) = item
-            while self.eval_lisp(cond, scope=scope):
-                self.eval_lisp(body, scope=scope)
+            return func(scope, item[1:])
         else:
             procedure = self.eval_lisp(item[0], scope=scope)
             arguments = [self.eval_lisp(arg, scope=scope) for arg in item[1:]]
