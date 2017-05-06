@@ -1,12 +1,12 @@
 import consts as c
 import interpreter
 
-# Python does not have type like that
 class Symbol(str):
+    """Represents LISP symbol."""
     pass
 
-#
 class Procedure(object):
+    """Represents LISP lambda."""
     def __init__(self, interpreter, parameters, body, outer_scope):
         self.interpreter = interpreter
         self.parameters = parameters
@@ -21,8 +21,8 @@ class Procedure(object):
         )
         return self.interpreter.eval_lisp(self.body, scope)
 
-
 def to_lisp(x):
+    """Converts object into LISP representation."""
     if is_symbol(x):
         return x
     elif is_string(x):
@@ -41,6 +41,7 @@ def to_lisp(x):
         )
 
 def typeof(x):
+    """Returns type of LISP object."""
     if is_symbol(x):
         return c.T_SYMBOL
     elif is_string(x):
