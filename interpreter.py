@@ -119,24 +119,6 @@ class Interpreter(object):
 #        print(lisp)
         return self.eval_lisp(lisp, scope=self.scope)
 
-    def typeof(self, value):
-        if isinstance(value, syntax.Symbol):
-            return self.T_SYMBOL
-        elif isinstance(value, bool):
-            return self.T_BOOLEAN
-        elif isinstance(value, str):
-            return self.T_STRING
-        elif isinstance(value, float):
-            return self.T_FLOAT
-        elif isinstance(value, int):
-            return self.T_INTEGER
-        elif isinstance(value, list):
-            return self.T_LIST
-        elif isinstance(value, Procedure):
-            return self.T_LAMBDA
-        else:
-            return self.T_UNKNOWN
-
     def assert_nargs(self, context, args, expected):
         got = len(args)
         if got != expected:
@@ -165,7 +147,7 @@ class Interpreter(object):
         if not isinstance(expected, list):
             expected = [expected]
 
-        got = self.typeof(args[n])
+        got = typeof(args[n])
         if got not in expected:
             raise RuntimeError(
                 "{}: expected {} argument to be {}, got {}.".format(
@@ -180,7 +162,7 @@ class Interpreter(object):
         if not isinstance(expected, list):
             expected = [expected]
 
-        got = self.typeof(value)
+        got = typeof(value)
         if got not in expected:
             raise RuntimeError(
                 "{}: expected {} argument to be evaluated into {}, got {}.".format(
@@ -217,7 +199,7 @@ class Interpreter(object):
     def builtin_if(self, scope, args):
         self.assert_rargs("if", args, 2, 3)
         test_result = self.eval_lisp(args[0], scope)
-        self.assert_type_eval("if", test_result, 0, self.T_BOOLEAN)
+        self.assert_type_eval("if", test_result, 0, c.T_BOOLEAN)
 
         if test_result:
             clause = args[1]
@@ -230,28 +212,28 @@ class Interpreter(object):
 
     def builtin_typeof(self, scope, args):
         self.assert_nargs("typeof", args, 1)
-        return self.typeof(args[0])
+        return typeof(args[0])
 
     def builtin_setq(self, scope, args):
         self.assert_nargs("setq", args, 2)
-        self.assert_type("setq", args, 0, self.T_SYMBOL)
+        self.assert_type("setq", args, 0, c.T_SYMBOL)
         scope.define(args[0], self.eval_lisp(args[1], scope))
 
     def builtin_setq_bang(self, scope, args):
         self.assert_nargs("setq!", args, 2)
-        self.assert_type("setq!", args, 0, self.T_SYMBOL)
+        self.assert_type("setq!", args, 0, c.T_SYMBOL)
         scope.set(args[0], self.eval_lisp(args[1], scope=scope))
 
     def builtin_set(self, scope, args):
         self.assert_nargs("setq", args, 2)
         name = self.eval_lisp(args[0], scope)
-        self.assert_type_eval("set", name, 0, self.T_SYMBOL)
+        self.assert_type_eval("set", name, 0, c.T_SYMBOL)
         scope.define(name, self.eval_lisp(args[1], scope))
 
     def builtin_set_bang(self, scope, args):
         self.assert_nargs("set!", args, 2)
         name = self.eval_lisp(args[0], scope)
-        self.assert_type_eval("set!", name, 0, self.T_SYMBOL)
+        self.assert_type_eval("set!", name, 0, c.T_SYMBOL)
         scope.set(name, self.eval_lisp(args[1], scope=scope))
 
     def builtin_format(self, scope, args):
@@ -305,21 +287,21 @@ class Interpreter(object):
     def builtin_head(self, scope, args):
         self.assert_nargs("head", args, 1)
         args = self.eval_all(args, scope)
-        self.assert_type_eval("head", args[0], 0, self.T_LIST)
+        self.assert_type_eval("head", args[0], 0, c.T_LIST)
 
         return args[0][0]
 
     def builtin_tail(self, scope, args):
         self.assert_nargs("tail", args, 1)
         args = self.eval_all(args, scope)
-        self.assert_type_eval("tail", args[0], 0, self.T_LIST)
+        self.assert_type_eval("tail", args[0], 0, c.T_LIST)
 
         return args[0][-1]
 
     def builtin_len(self, scope, args):
         self.assert_nargs("len", args, 1)
         args = self.eval_all(args, scope)
-        self.assert_type_eval("len", args[0], 0, self.T_LIST)
+        self.assert_type_eval("len", args[0], 0, c.T_LIST)
 
         return len(args[0])
 
@@ -327,7 +309,7 @@ class Interpreter(object):
         self.assert_rargs("=", args, 1, sys.maxint)
         args = self.eval_all(args, scope)
         for i in range(len(args)):
-            self.assert_type_eval("=", args[i], i, [self.T_INTEGER, self.T_FLOAT])
+            self.assert_type_eval("=", args[i], i, [c.T_INTEGER, c.T_FLOAT])
 
         for x in args[1:]:
             if not args[0] == x:
@@ -339,7 +321,7 @@ class Interpreter(object):
         self.assert_rargs("<", args, 1, sys.maxint)
         args = self.eval_all(args, scope)
         for i in range(len(args)):
-            self.assert_type_eval("<", args[i], i, [self.T_INTEGER, self.T_FLOAT])
+            self.assert_type_eval("<", args[i], i, [c.T_INTEGER, c.T_FLOAT])
 
         for x in args[1:]:
             if not args[0] < x:
@@ -351,7 +333,7 @@ class Interpreter(object):
         self.assert_rargs("<=", args, 1, sys.maxint)
         args = self.eval_all(args, scope)
         for i in range(len(args)):
-            self.assert_type_eval("<=", args[i], i, [self.T_INTEGER, self.T_FLOAT])
+            self.assert_type_eval("<=", args[i], i, [c.T_INTEGER, c.T_FLOAT])
 
         for x in args[1:]:
             if not args[0] <= x:
@@ -363,7 +345,7 @@ class Interpreter(object):
         self.assert_rargs(">", args, 1, sys.maxint)
         args = self.eval_all(args, scope)
         for i in range(len(args)):
-            self.assert_type_eval(">", args[i], i, [self.T_INTEGER, self.T_FLOAT])
+            self.assert_type_eval(">", args[i], i, [c.T_INTEGER, c.T_FLOAT])
 
 
         for x in args[1:]:
@@ -376,7 +358,7 @@ class Interpreter(object):
         self.assert_rargs(">=", args, 1, sys.maxint)
         args = self.eval_all(args, scope)
         for i in range(len(args)):
-            self.assert_type_eval(">=", args[i], i, [self.T_INTEGER, self.T_FLOAT])
+            self.assert_type_eval(">=", args[i], i, [c.T_INTEGER, c.T_FLOAT])
 
         for x in args[1:]:
             if not args[0] >= x:
@@ -388,7 +370,7 @@ class Interpreter(object):
         self.assert_rargs("+", args, 1, sys.maxint)
         args = self.eval_all(args, scope)
         for i in range(len(args)):
-            self.assert_type_eval("+", args[i], i, [self.T_INTEGER, self.T_FLOAT])
+            self.assert_type_eval("+", args[i], i, [c.T_INTEGER, c.T_FLOAT])
 
         result = args[0]
         for x in args[1:]:
@@ -401,7 +383,7 @@ class Interpreter(object):
         self.assert_rargs("-", args, 1, sys.maxint)
         args = self.eval_all(args, scope)
         for i in range(len(args)):
-            self.assert_type_eval("-", args[i], i, [self.T_INTEGER, self.T_FLOAT])
+            self.assert_type_eval("-", args[i], i, [c.T_INTEGER, c.T_FLOAT])
 
         result = args[0]
         for x in args[1:]:
@@ -413,7 +395,7 @@ class Interpreter(object):
         self.assert_rargs("/", args, 1, sys.maxint)
         args = self.eval_all(args, scope)
         for i in range(len(args)):
-            self.assert_type_eval("/", args[i], i, [self.T_INTEGER, self.T_FLOAT])
+            self.assert_type_eval("/", args[i], i, [c.T_INTEGER, c.T_FLOAT])
 
         result = args[0]
         for x in args[1:]:
@@ -425,7 +407,7 @@ class Interpreter(object):
         self.assert_rargs("*", args, 1, sys.maxint)
         args = self.eval_all(args, scope)
         for i in range(len(args)):
-            self.assert_type_eval("*", args[i], i, [self.T_INTEGER, self.T_FLOAT])
+            self.assert_type_eval("*", args[i], i, [c.T_INTEGER, c.T_FLOAT])
 
         result = args[0]
         for x in args[1:]:
@@ -437,7 +419,7 @@ class Interpreter(object):
         self.assert_nargs("mod", args, 2)
         args = self.eval_all(args, scope)
         for i in range(len(args)):
-            self.assert_type_eval("mod", args[i], i, [self.T_INTEGER, self.T_FLOAT])
+            self.assert_type_eval("mod", args[i], i, [c.T_INTEGER, c.T_FLOAT])
 
         return args[0] % args[1]
 
@@ -445,7 +427,7 @@ class Interpreter(object):
         self.assert_rargs("min", args, 1, sys.maxint)
         args = self.eval_all(args, scope)
         for i in range(len(args)):
-            self.assert_type_eval("min", args[i], i, [self.T_INTEGER, self.T_FLOAT])
+            self.assert_type_eval("min", args[i], i, [c.T_INTEGER, c.T_FLOAT])
 
         return min(args)
 
@@ -453,7 +435,7 @@ class Interpreter(object):
         self.assert_rargs("max", args, 1, sys.maxint)
         args = self.eval_all(args, scope)
         for i in range(len(args)):
-            self.assert_type_eval("max", args[i], i, [self.T_INTEGER, self.T_FLOAT])
+            self.assert_type_eval("max", args[i], i, [c.T_INTEGER, c.T_FLOAT])
 
         return max(args)
 

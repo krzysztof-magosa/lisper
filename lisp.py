@@ -40,6 +40,21 @@ def to_lisp(x):
             to_lisp(x.body)
         )
 
+def typeof(x):
+    if is_symbol(x):
+        return c.T_SYMBOL
+    elif is_string(x):
+        return c.T_STRING
+    elif is_integer(x):
+        return c.T_INTEGER
+    elif is_float(x):
+        return c.T_FLOAT
+    elif is_list(x):
+        return c.T_LIST if len(x) > 0 else c.T_NIL
+    elif is_boolean(x):
+        return c.T_BOOLEAN if x else c.T_NIL
+    elif is_lambda(x):
+        return c.T_LAMBDA
 
 def is_symbol(x):
     return isinstance(x, Symbol)
