@@ -81,6 +81,7 @@ class Interpreter(object):
     BUILTINS = {
         'if': 'builtin_if',
         'lambda': 'builtin_lambda',
+        '\\': 'builtin_lambda',
         'define': 'builtin_define',
         'set!': 'builtin_set',
         'quote': 'builtin_quote',
