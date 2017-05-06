@@ -1,2 +1,4 @@
 *.pyc
 /venv
+/parser.out
+/parsetab.py
