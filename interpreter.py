@@ -62,6 +62,8 @@ def scope_init(scope):
 class Interpreter(object):
     BUILTINS = {
         'if': 'builtin_if',
+        'eq': 'builtin_eq',
+        'equal': 'builtin_equal',
         c.LAMBDA: 'builtin_lambda',
         '\\': 'builtin_lambda',
         'macro': 'builtin_macro',
@@ -217,12 +219,25 @@ class Interpreter(object):
 
         return self.eval_lisp(clause, scope)
 
+    def builtin_eq(self, scope, args):
+        a = self.eval_lisp(args[0], scope)
+        b = self.eval_lisp(args[0], scope)
+        print(id(a))
+        print(id(b))
+        print(a.__class__.__name__)
+        return c.V_TRUE if id(a) == id(b) else c.V_NIL
+
+    def builtin_equal(self, scope, args):
+        a = self.eval_lisp(args[0], scope)
+        b = self.eval_lisp(args[0], scope)
+        return c.V_TRUE if a == b else c.V_NIL
+
     def builtin_typeof(self, scope, args):
         self.assert_nargs("typeof", args, 1)
         return typeof(self.eval_lisp(args[0], scope))
 
     def builtin_define(self, scope, args):
-        print(args)
+#        print(args)
         self.assert_nargs("define", args, 2)
 
         name = args[0] # self.eval_lisp(args[0], scope)
@@ -319,8 +334,8 @@ class Interpreter(object):
     def builtin_math_eq(self, scope, args):
         self.assert_rargs("=", args, 1, sys.maxint)
         args = self.eval_all(args, scope)
-#        for i in range(len(args)):
-#            self.assert_type_eval("=", args[i], i, [c.T_INTEGER, c.T_FLOAT])
+        for i in range(len(args)):
+            self.assert_type_eval("=", args[i], i, [c.T_INTEGER, c.T_FLOAT])
 
         for x in args[1:]:
             if not args[0] == x:

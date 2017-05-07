@@ -4,23 +4,39 @@
           `(define ,name (macro ,args ,body))))
 
  (define map (lambda (f l)
-               (if (nil? l)
+               (if (null l)
                    nil
                  (join
                   (list (call f (car l)))
                   (map f (cdr l))))))
 
  (define filter (lambda (f l)
-                  (if (nil? l)
+                  (if (null l)
                       nil
                     (join (if (call f (car l))
                               (list (car l))
                             nil)
-
                           (filter f (cdr l))))))
 
- (define inc (lambda (x) (+ 1 x)))
+ (define reverse (lambda (l)
+                   (if (null l)
+                       nil
+                     (join
+                      (reverse (cdr l))
+                      (list (car l))))))
 
- (define x '(() 1))
- (nil? (car x))
+ (define head (lambda (n l)
+                (if (= n 0)
+                    nil
+                  (join
+                   (list (car l))
+                   (head (- n 1) (cdr l))))))
+
+ (define tail (lambda (n l)
+                (reverse (head n (reverse l)))))
+
+ (define not (lambda (x) (if (null x) t nil)))
+ (define inc (lambda (x) (+ 1 x)))
+ (define even (lambda (x) (= 0 (mod x 2))))
+ (define odd (lambda (x) (not (= 0 (mod x 2)))))
 )
