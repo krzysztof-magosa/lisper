@@ -45,43 +45,29 @@ class Macro(Procedure):
 
 
 def scope_init(scope):
-    scope.define('nil', [])
-    scope.define('t', True)
+    scope.define(c.NIL, c.V_NIL)
+    scope.define(c.TRUE, c.V_TRUE)
 
-    scope.define('abs', abs)
+#    scope.define('abs', abs)
 
-    scope.define('car', lambda x: x[0])
-    scope.define('cdr', lambda x: x[1:])
+#    scope.define('begin', lambda *x: x[-1])
 
-    scope.define('begin', lambda *x: x[-1])
-
-    scope.define('integer?', lambda x: is_integer(x))
-    scope.define('float?', lambda x: is_float(x))
-    scope.define('string?', lambda x: is_string(x))
-    scope.define('symbol?', lambda x: is_symbol(x))
-    scope.define('list?', lambda x: is_list(x))
+#    scope.define('integer?', lambda x: is_integer(x))
+#    scope.define('float?', lambda x: is_float(x))
+#    scope.define('string?', lambda x: is_string(x))
+#    scope.define('symbol?', lambda x: is_symbol(x))
+#    scope.define('list?', lambda x: is_list(x))
 
 
 class Interpreter(object):
-    T_SYMBOL = 'symbol'
-    T_STRING = 'string'
-    T_FLOAT = 'float'
-    T_INTEGER = 'integer'
-    T_BOOLEAN = 'boolean'
-    T_LIST = 'list'
-    T_LAMBDA = 'lambda'
-    T_UNKNOWN = 'unknown'
-
     BUILTINS = {
         'if': 'builtin_if',
         c.LAMBDA: 'builtin_lambda',
         '\\': 'builtin_lambda',
         'macro': 'builtin_macro',
         'quasiquote': 'builtin_quasiquote',
-        'set': 'builtin_set',
+        'define': 'builtin_define',
         'set!': 'builtin_set_bang',
-        'setq': 'builtin_setq',
-        'setq!': 'builtin_setq_bang',
         'quote': 'builtin_quote',
         'print': 'builtin_print',
         'prin1': 'builtin_prin1',
@@ -89,10 +75,15 @@ class Interpreter(object):
         'typeof': 'builtin_typeof',
         'format': 'builtin_format',
         'cons': 'builtin_cons',
+        'null': 'builtin_is_nil',
+        'join': 'builtin_join',
+        'list': 'builtin_list',
 
-        'head': 'builtin_head',
-        'tail': 'builtin_tail',
+        'car': 'builtin_car',
+        'cdr': 'builtin_cdr',
         'len': 'builtin_len',
+
+        'call': 'builtin_call',
 
         '=': 'builtin_math_eq',
         '<': 'builtin_math_lt',
@@ -106,7 +97,9 @@ class Interpreter(object):
         '*': 'builtin_math_mul',
         'mod': 'builtin_math_mod',
         'min': 'builtin_math_min',
-        'max': 'builtin_math_max'
+        'max': 'builtin_math_max',
+
+        'begin': 'builtin_begin'
     }
 
     def __init__(self, parser=syntax.parser, scope_init=scope_init):
@@ -173,68 +166,81 @@ class Interpreter(object):
                 )
             )
 
-    def is_nil(self, x):
-        if isinstance(x, syntax.Symbol) and x == "nil":
-            return True
-        elif x == []:
-            return True
-
-        return False
+#    def is_nil(self, x):
+#        if isinstance(x, syntax.Symbol) and x == "nil":
+#            return True
+#        elif x == []:
+#            return True
+#
+#        return False
 
     def builtin_cons(self, scope, args):
         head = self.eval_lisp(args[0], scope)
         rest = self.eval_lisp(args[1], scope)
 
-        if self.is_nil(head):
+        if is_nil(head):
             head = []
 
-        if self.is_nil(rest):
+        if is_nil(rest):
             rest = []
 
         if not isinstance(rest, list):
             rest = [rest]
 
-        return [head] + rest
+        x = [head] + rest
+        return x
+
+    def builtin_is_nil(self, scope, args):
+        var = self.eval_lisp(args[0], scope)
+#        print(var.__class__.__name__)
+#        print(is_nil(var))
+        return c.V_TRUE if is_nil(var) else c.V_NIL
+
+    def builtin_join(self, scope, args):
+        args = [self.eval_lisp(x, scope) for x in args]
+        return sum(args, [])
+
+    def builtin_list(self, scope, args):
+        return [self.eval_lisp(x, scope) for x in args]
 
     def builtin_if(self, scope, args):
         self.assert_rargs("if", args, 2, 3)
         test_result = self.eval_lisp(args[0], scope)
-        self.assert_type_eval("if", test_result, 0, c.T_BOOLEAN)
+#        self.assert_type_eval("if", test_result, 0, c.T_BOOLEAN)
 
-        if test_result:
+        if is_true(test_result):
             clause = args[1]
         elif len(args) == 3:
             clause = args[2]
         else:
-            clause = []
+            clause = c.V_NIL
 
         return self.eval_lisp(clause, scope)
 
     def builtin_typeof(self, scope, args):
         self.assert_nargs("typeof", args, 1)
-        return typeof(args[0])
+        return typeof(self.eval_lisp(args[0], scope))
 
-    def builtin_setq(self, scope, args):
-        self.assert_nargs("setq", args, 2)
-        self.assert_type("setq", args, 0, c.T_SYMBOL)
-        scope.define(args[0], self.eval_lisp(args[1], scope))
+    def builtin_define(self, scope, args):
+        print(args)
+        self.assert_nargs("define", args, 2)
 
-    def builtin_setq_bang(self, scope, args):
-        self.assert_nargs("setq!", args, 2)
-        self.assert_type("setq!", args, 0, c.T_SYMBOL)
-        scope.set(args[0], self.eval_lisp(args[1], scope=scope))
+        name = args[0] # self.eval_lisp(args[0], scope)
+        value = self.eval_lisp(args[1], scope)
 
-    def builtin_set(self, scope, args):
-        self.assert_nargs("setq", args, 2)
-        name = self.eval_lisp(args[0], scope)
-        self.assert_type_eval("set", name, 0, c.T_SYMBOL)
-        scope.define(name, self.eval_lisp(args[1], scope))
+        self.assert_type_eval("define", name, 0, c.T_SYMBOL)
+
+        scope.define(name, value)
 
     def builtin_set_bang(self, scope, args):
         self.assert_nargs("set!", args, 2)
-        name = self.eval_lisp(args[0], scope)
+
+        name = args[0] # self.eval_lisp(args[0], scope)
+        value = self.eval_lisp(args[1], scope)
+
         self.assert_type_eval("set!", name, 0, c.T_SYMBOL)
-        scope.set(name, self.eval_lisp(args[1], scope=scope))
+
+        scope.set(name, value)
 
     def builtin_format(self, scope, args):
         return sprintf(args[0], *args[1:])
@@ -248,19 +254,19 @@ class Interpreter(object):
 
     def builtin_macro(self, scope, args):
         (parameters, body) = args
-        return Macro(self, parameters, self.eval_lisp(body, scope), scope)
+        return Macro(self, parameters, body, scope)
 
     def is_pair(self, x):
         return x != [] and isinstance(x, list)
 
     def expand_quasiquote(self, x):
         if not self.is_pair(x):
-            return ['quote', x]
-        elif x[0] == 'unquote':
+            return [Symbol('quote'), x]
+        elif is_symbol(x[0]) and x[0] == 'unquote':
             return x[1]
         else:
             return [
-                'cons',
+                Symbol('cons'),
                 self.expand_quasiquote(x[0]),
                 self.expand_quasiquote(x[1:])
             ]
@@ -284,38 +290,43 @@ class Interpreter(object):
         while self.eval_lisp(cond, scope=scope):
             self.eval_lisp(body, scope=scope)
 
-    def builtin_head(self, scope, args):
-        self.assert_nargs("head", args, 1)
+    def builtin_car(self, scope, args):
+        self.assert_nargs("car", args, 1)
         args = self.eval_all(args, scope)
-        self.assert_type_eval("head", args[0], 0, c.T_LIST)
+        self.assert_type_eval("car", args[0], 0, c.T_LIST)
 
         return args[0][0]
 
-    def builtin_tail(self, scope, args):
-        self.assert_nargs("tail", args, 1)
+    def builtin_cdr(self, scope, args):
+        self.assert_nargs("cdr", args, 1)
         args = self.eval_all(args, scope)
-        self.assert_type_eval("tail", args[0], 0, c.T_LIST)
+        self.assert_type_eval("cdr", args[0], 0, c.T_LIST)
 
-        return args[0][-1]
+        return args[0][1:]
 
     def builtin_len(self, scope, args):
         self.assert_nargs("len", args, 1)
         args = self.eval_all(args, scope)
-        self.assert_type_eval("len", args[0], 0, c.T_LIST)
+        self.assert_type_eval("len", args[0], 0, [c.T_LIST, c.T_NIL])
 
         return len(args[0])
+
+    def builtin_call(self, scope, args):
+        name = self.eval_lisp(args[0], scope)
+#        args = self.eval_all(args[1:], scope)
+        return self.eval_lisp([name] + args[1:], scope)
 
     def builtin_math_eq(self, scope, args):
         self.assert_rargs("=", args, 1, sys.maxint)
         args = self.eval_all(args, scope)
-        for i in range(len(args)):
-            self.assert_type_eval("=", args[i], i, [c.T_INTEGER, c.T_FLOAT])
+#        for i in range(len(args)):
+#            self.assert_type_eval("=", args[i], i, [c.T_INTEGER, c.T_FLOAT])
 
         for x in args[1:]:
             if not args[0] == x:
-                return False
+                return c.V_NIL
 
-        return True
+        return c.V_TRUE
 
     def builtin_math_lt(self, scope, args):
         self.assert_rargs("<", args, 1, sys.maxint)
@@ -325,9 +336,9 @@ class Interpreter(object):
 
         for x in args[1:]:
             if not args[0] < x:
-                return False
+                return c.V_NIL
 
-        return True
+        return c.V_TRUE
 
     def builtin_math_le(self, scope, args):
         self.assert_rargs("<=", args, 1, sys.maxint)
@@ -337,9 +348,9 @@ class Interpreter(object):
 
         for x in args[1:]:
             if not args[0] <= x:
-                return False
+                return c.V_NIL
 
-        return True
+        return c.V_TRUE
 
     def builtin_math_gt(self, scope, args):
         self.assert_rargs(">", args, 1, sys.maxint)
@@ -350,9 +361,9 @@ class Interpreter(object):
 
         for x in args[1:]:
             if not args[0] > x:
-                return False
+                return c.V_NIL
 
-        return True
+        return c.V_TRUE
 
     def builtin_math_ge(self, scope, args):
         self.assert_rargs(">=", args, 1, sys.maxint)
@@ -362,9 +373,9 @@ class Interpreter(object):
 
         for x in args[1:]:
             if not args[0] >= x:
-                return False
+                return c.V_NIL
 
-        return True
+        return c.V_TRUE
 
     def builtin_math_add(self, scope, args):
         self.assert_rargs("+", args, 1, sys.maxint)
@@ -439,11 +450,19 @@ class Interpreter(object):
 
         return max(args)
 
+    def builtin_begin(self, scope, args):
+        result = c.V_NIL
+
+        for x in args:
+            result = self.eval_lisp(x, scope)
+
+        return result
 
     def eval_all(self, args, scope):
         return [self.eval_lisp(x, scope) for x in args]
 
     def eval_lisp(self, item, scope):
+        print("Running: {}".format(to_lisp(item)))
         if isinstance(item, syntax.Symbol):
             return scope.get(item)
         elif not isinstance(item, list) or len(item) == 0:
@@ -453,11 +472,15 @@ class Interpreter(object):
             return func(scope, item[1:])
         else:
             procedure = self.eval_lisp(item[0], scope=scope)
-            arguments = [self.eval_lisp(arg, scope=scope) for arg in item[1:]]
 
             if isinstance(procedure, Macro):
-                print("MAKRO")
-#                procedure.outer_scope = scope
-                return self.eval_lisp(procedure(*arguments), scope)
-            else:
+                arguments = item[1:]
+                procedure.outer_scope = scope
+                lisp = procedure(*arguments)
+                return self.eval_lisp(lisp, scope)
+            elif isinstance(procedure, Procedure):
+                arguments = [self.eval_lisp(arg, scope=scope) for arg in item[1:]]
                 return procedure(*arguments)
+            else:
+                print(item)
+                raise RuntimeError("Not callable")

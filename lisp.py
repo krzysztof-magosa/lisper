@@ -3,7 +3,17 @@ import interpreter
 
 class Symbol(str):
     """Represents LISP symbol."""
-    pass
+    def __eq__(self, other):
+        if super(Symbol, self).__eq__(c.TRUE) and other == True:
+            return True
+
+        if super(Symbol, self).__eq__(c.NIL) and other == []:
+            return True
+
+        return super(Symbol, self).__eq__(other)
+
+    def __ne__(self, other):
+        return not self.__eq__(other)
 
 class Procedure(object):
     """Represents LISP lambda."""
@@ -29,21 +39,27 @@ def to_lisp(x):
         return '"{}"'.format(x)
     elif is_integer(x) or is_float(x):
         return str(x)
-    elif is_list(x):
-        return "({})".format(" ".join([to_lisp(i) for i in x]))
     elif is_boolean(x):
         return c.TRUE if x else c.NIL
+    elif is_list(x):
+        return "({})".format(" ".join([to_lisp(i) for i in x]))
     elif is_lambda(x):
         return "({} ({}) {})".format(
             c.LAMBDA,
             " ".join([to_lisp(i) for i in x.parameters]),
             to_lisp(x.body)
         )
+    else:
+        raise RuntimeError("Unknown type")
+        # HOW IT HAPPENS?!
+#        return c.NIL
 
 def typeof(x):
     """Returns type of LISP object."""
     if is_symbol(x):
         return c.T_SYMBOL
+    elif is_boolean(x):
+        return c.T_BOOLEAN if x else c.T_NIL
     elif is_string(x):
         return c.T_STRING
     elif is_integer(x):
@@ -52,10 +68,10 @@ def typeof(x):
         return c.T_FLOAT
     elif is_list(x):
         return c.T_LIST if len(x) > 0 else c.T_NIL
-    elif is_boolean(x):
-        return c.T_BOOLEAN if x else c.T_NIL
     elif is_lambda(x):
         return c.T_LAMBDA
+    else:
+        raise RuntimeError("Unknown type")
 
 def is_symbol(x):
     return isinstance(x, Symbol)
@@ -64,13 +80,14 @@ def is_string(x):
     return isinstance(x, str) and not isinstance(x, Symbol)
 
 def is_integer(x):
-    return isinstance(x, int)
+    # True/False are integers
+    return isinstance(x, int) and not isinstance(x, bool)
 
 def is_float(x):
     return isinstance(x, float)
 
 def is_boolean(x):
-    return x == True or x == []
+    return (isinstance(x, bool) and x == True) or x == []
 
 def is_list(x):
     return isinstance(x, list)
@@ -83,3 +100,6 @@ def is_true(x):
 
 def is_lambda(x):
     return isinstance(x, Procedure)
+
+#if __name__ == '__main__':
+#    print(typeof(1))

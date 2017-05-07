@@ -16,11 +16,14 @@ def run_code(code):
         print(e.message)
 
 
+with open('stdlib.lisper', 'r') as handle:
+        code = handle.read()
+        run_code(code)
+
 if len(sys.argv) == 2:
     with open(sys.argv[1], 'r') as handle:
         code = handle.read()
         run_code(code)
-
 else:
     while True:
         code = raw_input('LISPer> ')

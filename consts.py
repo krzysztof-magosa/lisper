@@ -1,6 +1,10 @@
-# Special values
+# Special values names
 TRUE = 't'
 NIL = 'nil'
+
+# Special values
+V_TRUE = True
+V_NIL = []
 
 # Built-ins
 QUOTE = 'quote'
@@ -16,3 +20,4 @@ T_FLOAT = 'float'
 T_LIST = 'list'
 T_BOOLEAN = 'boolean'
 T_LAMBDA = 'lambda'
+T_NIL = 'nil'

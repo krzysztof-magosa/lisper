@@ -11,7 +11,9 @@ tokens = (
     'SYMBOL',
     'QUOTE',
     'TICK',
-    'COMMA'
+    'COMMA',
+    'TRUE',
+    'NIL'
 )
 
 # Lexer rules
@@ -20,6 +22,8 @@ t_RPAREN = r'\)'
 t_QUOTE = r'\''
 t_TICK = r'`'
 t_COMMA = r','
+t_TRUE = r't'
+t_NIL = r'nil'
 t_ignore = ' \t'
 
 def t_newline(t):
@@ -59,6 +63,14 @@ def p_expr_atom(p):
 def p_expr_list(p):
     'expr : list'
     p[0] = p[1]
+
+#def p_keyword_true(p):
+#    'keyword : TRUE'
+#    p[0] = c.V_TRUE
+
+#def p_keyword_nil(p):
+#    'keyword : NIL'
+#    p[0] = c.V_NIL
 
 def p_atom(p):
     '''
