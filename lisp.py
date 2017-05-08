@@ -1,19 +1,63 @@
 import consts as c
 import interpreter
 
-class Symbol(str):
-    """Represents LISP symbol."""
+class Qualifier:
+    CONST = 1
+
+class LispType(object):
+    def __init__(self, value, qualifiers=[]):
+        self._value = value
+        self._qualifiers = qualifiers
+
+    @property
+    def value(self):
+        return self._value
+
+    @value.setter
+    def value(self, value):
+        if Qualifier.CONST in self.qualifiers:
+            raise RuntimeError("Cannot modify const.")
+
+        self._value = value
+
+    @property
+    def qualifiers(self):
+        return self._qualifiers
+
     def __eq__(self, other):
-        if super(Symbol, self).__eq__(c.TRUE) and other == True:
-            return True
-
-        if super(Symbol, self).__eq__(c.NIL) and other == []:
-            return True
-
-        return super(Symbol, self).__eq__(other)
+        return self.value == other.value
 
     def __ne__(self, other):
         return not self.__eq__(other)
+
+class Number(LispType):
+    pass
+
+class Integer(Number):
+    pass
+
+class Float(Number):
+    pass
+
+class String(LispType):
+    pass
+
+class Symbol(LispType):
+    pass
+
+#class Symbol(str):
+#    """Represents LISP symbol."""
+#    def __eq__(self, other):
+#        if super(Symbol, self).__eq__(c.TRUE) and other == True:
+#            return True
+#
+#        if super(Symbol, self).__eq__(c.NIL) and other == []:
+#            return True
+#
+#        return super(Symbol, self).__eq__(other)
+#
+#    def __ne__(self, other):
+#       return not self.__eq__(other)
 
 class Procedure(object):
     """Represents LISP lambda."""

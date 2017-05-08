@@ -1,0 +1,1 @@
+cmd='/opt/homebrew/Cellar/cmake/3.7.2_1/bin/cmake;-GUnix Makefiles;/Users/km/projects/lisper-cpp/build/tests/gtest/src/gtest'

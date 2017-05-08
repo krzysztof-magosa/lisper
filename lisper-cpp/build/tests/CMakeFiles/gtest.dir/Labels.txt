@@ -1,0 +1,13 @@
+# Target labels
+ gtest
+# Source files and their labels
+/Users/km/projects/lisper-cpp/build/tests/CMakeFiles/gtest
+/Users/km/projects/lisper-cpp/build/tests/CMakeFiles/gtest.rule
+/Users/km/projects/lisper-cpp/build/tests/CMakeFiles/gtest-complete.rule
+/Users/km/projects/lisper-cpp/build/tests/gtest/src/gtest-stamp/gtest-install.rule
+/Users/km/projects/lisper-cpp/build/tests/gtest/src/gtest-stamp/gtest-mkdir.rule
+/Users/km/projects/lisper-cpp/build/tests/gtest/src/gtest-stamp/gtest-download.rule
+/Users/km/projects/lisper-cpp/build/tests/gtest/src/gtest-stamp/gtest-update.rule
+/Users/km/projects/lisper-cpp/build/tests/gtest/src/gtest-stamp/gtest-patch.rule
+/Users/km/projects/lisper-cpp/build/tests/gtest/src/gtest-stamp/gtest-configure.rule
+/Users/km/projects/lisper-cpp/build/tests/gtest/src/gtest-stamp/gtest-build.rule

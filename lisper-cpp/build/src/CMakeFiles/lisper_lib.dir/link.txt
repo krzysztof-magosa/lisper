@@ -1,0 +1,2 @@
+/Library/Developer/CommandLineTools/usr/bin/ar qc liblisper_lib.a  CMakeFiles/lisper_lib.dir/parser.cc.o CMakeFiles/lisper_lib.dir/lexer.cc.o
+/Library/Developer/CommandLineTools/usr/bin/ranlib liblisper_lib.a

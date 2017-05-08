@@ -62,7 +62,7 @@ def scope_init(scope):
 class Interpreter(object):
     BUILTINS = {
         'if': 'builtin_if',
-        'eq': 'builtin_eq',
+#        'eq': 'builtin_eq',
         'equal': 'builtin_equal',
         c.LAMBDA: 'builtin_lambda',
         '\\': 'builtin_lambda',
@@ -219,13 +219,13 @@ class Interpreter(object):
 
         return self.eval_lisp(clause, scope)
 
-    def builtin_eq(self, scope, args):
-        a = self.eval_lisp(args[0], scope)
-        b = self.eval_lisp(args[0], scope)
-        print(id(a))
-        print(id(b))
-        print(a.__class__.__name__)
-        return c.V_TRUE if id(a) == id(b) else c.V_NIL
+#    def builtin_eq(self, scope, args):
+#        a = self.eval_lisp(args[0], scope)
+#        b = self.eval_lisp(args[0], scope)
+#        print(id(a))
+#        print(id(b))
+#        print(a.__class__.__name__)
+#        return c.V_TRUE if id(a) == id(b) else c.V_NIL
 
     def builtin_equal(self, scope, args):
         a = self.eval_lisp(args[0], scope)
